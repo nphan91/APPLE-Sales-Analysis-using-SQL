@@ -6,9 +6,10 @@
 # 1. Find the number of stores in each country.
 ```sql
 SELECT [country], COUNT([store_id]) AS [store_count]
-FROM [stores]
+FROM [dbo].[stores]
 GROUP BY [country]
 ORDER BY [store_count] DESC;
+
 ```
 # 2. Calculate the total number of units sold by each state
 ```sql
@@ -17,45 +18,49 @@ SELECT
     ST.[store_name], 
     SUM(S.[quantity]) AS [total_unit_sold]
 FROM 
-    [sales] S
+    [dbo].[sales] S
 JOIN 
-    [stores] ST
+    [dbo].[stores] ST
 ON 
     S.[store_id] = ST.[store_id]
 GROUP BY 
     S.[store_id], ST.[store_name]
 ORDER BY 
     SUM(S.[quantity]) DESC;
+
 ```
 # 3. Identify how many sales occurred in December 2023.
 ```SQL
 SELECT COUNT([sale_id]) AS [total_sales]
-FROM [sales]
+FROM [dbo].[sales]
 WHERE FORMAT([sale_date], 'MM-yyyy') = '12-2023';
+
 ```
 # 4. Determine how many stores have never had a warranty claim filed.
 ```sql
 SELECT COUNT(*) AS [stores_without_warranty_claims]
-FROM [stores]
+FROM [dbo].[stores]
 WHERE [store_id] NOT IN (
     SELECT DISTINCT S.[store_id]
-    FROM [sales] AS S
-    RIGHT JOIN [warranty] AS W
+    FROM [dbo].[sales] AS S
+    RIGHT JOIN [dbo].[warranty] AS W
     ON S.[sale_id] = W.[sale_id]
 );
+
 ```
 
 # 5. Calculate the percentage of warranty claims marked as "Warranty Void".
 ```sql
 SELECT 
     ROUND(
-        CAST(COUNT([claim_id]) AS FLOAT) / CAST((SELECT COUNT(*) FROM [warranty]) AS FLOAT) * 100, 
+        CAST(COUNT([claim_id]) AS FLOAT) / CAST((SELECT COUNT(*) FROM [dbo].[warranty]) AS FLOAT) * 100, 
         2
     ) AS [warranty_void_percentage]
 FROM 
-    [warranty]
+    [dbo].[warranty]
 WHERE 
     [repair_status] = 'Warranty Void';
+
 
 ```
 
