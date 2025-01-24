@@ -2,12 +2,63 @@
 ![Image](https://github.com/nphan91/APPLE-Sales-Analysis-using-SQL/blob/main/Apple%20Logo.png)
 ## Overview
 # SQL Queries
-# 1. Find the number of stores in each country.
 
-Calculate the total number of units sold by each store.
-Identify how many sales occurred in December 2023.
-Determine how many stores have never had a warranty claim filed.
-Calculate the percentage of warranty claims marked as "Warranty Void".
+# 1. Find the number of stores in each country.
+```sql
+SELECT [country], COUNT([store_id]) AS [store_count]
+FROM [stores]
+GROUP BY [country]
+ORDER BY [store_count] DESC;
+```
+# 2. Calculate the total number of units sold by each state
+```sql
+SELECT 
+    S.[store_id], 
+    ST.[store_name], 
+    SUM(S.[quantity]) AS [total_unit_sold]
+FROM 
+    [sales] S
+JOIN 
+    [stores] ST
+ON 
+    S.[store_id] = ST.[store_id]
+GROUP BY 
+    S.[store_id], ST.[store_name]
+ORDER BY 
+    SUM(S.[quantity]) DESC;
+```
+# 3. Identify how many sales occurred in December 2023.
+```SQL
+SELECT COUNT([sale_id]) AS [total_sales]
+FROM [sales]
+WHERE FORMAT([sale_date], 'MM-yyyy') = '12-2023';
+```
+# 4. Determine how many stores have never had a warranty claim filed.
+```sql
+SELECT COUNT(*) AS [stores_without_warranty_claims]
+FROM [stores]
+WHERE [store_id] NOT IN (
+    SELECT DISTINCT S.[store_id]
+    FROM [sales] AS S
+    RIGHT JOIN [warranty] AS W
+    ON S.[sale_id] = W.[sale_id]
+);
+```
+
+# 5. Calculate the percentage of warranty claims marked as "Warranty Void".
+```sql
+SELECT 
+    ROUND(
+        CAST(COUNT([claim_id]) AS FLOAT) / CAST((SELECT COUNT(*) FROM [warranty]) AS FLOAT) * 100, 
+        2
+    ) AS [warranty_void_percentage]
+FROM 
+    [warranty]
+WHERE 
+    [repair_status] = 'Warranty Void';
+
+```
+
 Identify which store had the highest total units sold in the last year.
 Count the number of unique products sold in the last year.
 Find the average price of products in each category.
