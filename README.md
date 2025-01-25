@@ -2,7 +2,7 @@
 ![Image](https://github.com/nphan91/APPLE-Sales-Analysis-using-SQL/blob/main/Apple%20Logo.png)
 ## Overview
 This project is focused on analyzing the sales data of Apple products across various stores and regions, with the goal of gaining valuable insights into product performance, trends, and customer behavior. By leveraging SQL queries to extract and analyze data, we aim to track key metrics such as the number of units sold, warranty claims, and sales growth over time.
-
+![Image](https://github.com/nphan91/APPLE-Sales-Analysis-using-SQL/blob/main/erd.png)
 ## Purpose of the Project
 The purpose of this project is to provide a comprehensive analysis of Apple's sales performance, identify patterns and trends, and assess the effectiveness of warranty management. The analysis will cover various aspects, including:
 - Sales by Region: Understanding the distribution of sales across different countries and states to identify key markets.
