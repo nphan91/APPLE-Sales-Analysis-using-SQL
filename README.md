@@ -53,13 +53,13 @@ WHERE FORMAT([sale_date], 'MM-yyyy') = '12-2023';
 ```
 # 4. Determine how many stores have never had a warranty claim filed.
 ```sql
-SELECT COUNT(*) AS [stores_without_warranty_claims]
-FROM [dbo].[stores]
-WHERE [store_id] NOT IN (
-    SELECT DISTINCT S.[store_id]
-    FROM [dbo].[sales] AS S
-    RIGHT JOIN [dbo].[warranty] AS W
-    ON S.[sale_id] = W.[sale_id]
+SELECT COUNT(*) AS stores_without_warranty_claims
+FROM [dbo].[stores] ST
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM [dbo].[warranty] W
+    JOIN [dbo].[sales] S ON W.[sale_id] = S.[sale_id]
+    WHERE S.[store_id] = ST.[store_id]
 );
 
 ```
@@ -257,7 +257,7 @@ SELECT
     st.[country],
     COUNT(s.[sale_id]) AS [total_sales],
     COUNT(w.[claim_id]) AS [total_claims],
-    (COUNT(w.[claim_id]) * 100.0 / COUNT(s.[sale_id])) AS [warranty_claim_percentage]
+    ROUND(COUNT(w.[claim_id]) * 100.0 / COUNT(s.[sale_id]), 2) AS warranty_claim_percentage
 FROM 
     [dbo].[sales] s
 JOIN 
