@@ -372,96 +372,79 @@ ORDER BY
 ```sql
 WITH MonthlySales AS (
     SELECT 
-        st.[store_id],
-        st.[store_name],
-        YEAR(s.[sale_date]) AS [year],
-        MONTH(s.[sale_date]) AS [month],
-        SUM(s.[quantity] * p.[price]) AS [monthly_sales]
+        st.store_id,
+        st.store_name,
+        YEAR(s.sale_date) AS year,
+        MONTH(s.sale_date) AS month,
+        SUM(s.quantity * p.price) AS monthly_sales
     FROM 
-        [dbo].[sales] s
+        dbo.sales s
     JOIN 
-        [dbo].[stores] st ON s.[store_id] = st.[store_id]
+        dbo.stores st ON s.store_id = st.store_id
     JOIN 
-        [dbo].[products] p ON s.[product_id] = p.[product_id]
+        dbo.products p ON s.product_id = p.product_id
     WHERE 
-        s.[sale_date] >= DATEADD(YEAR, -4, GETDATE()) -- Past 4 years
+        s.sale_date >= DATEADD(YEAR, -4, GETDATE()) -- Past 4 years
     GROUP BY 
-        st.[store_id], st.[store_name], YEAR(s.[sale_date]), MONTH(s.[sale_date])
-),
-RunningTotalSales AS (
-    SELECT 
-        ms.[store_id],
-        ms.[store_name],
-        ms.[year],
-        ms.[month],
-        ms.[monthly_sales],
-        SUM(ms.[monthly_sales]) OVER (PARTITION BY ms.[store_id] ORDER BY ms.[year], ms.[month]) AS [running_total_sales]
-    FROM 
-        MonthlySales ms
+        st.store_id, st.store_name, YEAR(s.sale_date), MONTH(s.sale_date)
 )
 SELECT 
-    [store_id],
-    [store_name],
-    [year],
-    [month],
-    [monthly_sales],
-    [running_total_sales]
+    ms.store_id,
+    ms.store_name,
+    ms.year,
+    ms.month,
+    ms.monthly_sales,
+    SUM(ms.monthly_sales) OVER (
+        PARTITION BY ms.store_id 
+        ORDER BY ms.year, ms.month
+    ) AS running_total_sales
 FROM 
-    RunningTotalSales
+    MonthlySales ms
 ORDER BY 
-    [store_id], [year], [month];
+    ms.store_id, ms.year, ms.month;
+
 ```
 
 # 21. Analyze product sales trends over time, segmented into key periods: from launch to 6 months, 6-12 months, 12-18 months, and beyond 18 months.
 ```sql
-WITH ProductSales AS (
+WITH SalesTrends AS (
     SELECT 
-        p.[product_id],
-        p.[product_name],
-        p.[launch_date],
-        s.[sale_date],
-        SUM(s.[quantity] * pr.[price]) AS [total_sales],
-        DATEDIFF(MONTH, p.[launch_date], s.[sale_date]) AS [months_since_launch]
-    FROM 
-        [dbo].[sales] s
-    JOIN 
-        [dbo].[products] p ON s.[product_id] = p.[product_id]
-    JOIN 
-        [dbo].[products] pr ON s.[product_id] = pr.[product_id]  -- Assuming there's a price column in the products table
-    WHERE 
-        s.[sale_date] >= p.[launch_date]  -- Only consider sales after product launch
-    GROUP BY 
-        p.[product_id], p.[product_name], p.[launch_date], s.[sale_date]
-),
-SalesTrends AS (
-    SELECT 
-        [product_id],
-        [product_name],
+        p.product_id,
+        p.product_name,
         CASE 
-            WHEN [months_since_launch] <= 6 THEN '0-6 months'
-            WHEN [months_since_launch] BETWEEN 7 AND 12 THEN '6-12 months'
-            WHEN [months_since_launch] BETWEEN 13 AND 18 THEN '12-18 months'
+            WHEN DATEDIFF(MONTH, p.launch_date, s.sale_date) BETWEEN 0 AND 6 THEN '0-6 months'
+            WHEN DATEDIFF(MONTH, p.launch_date, s.sale_date) BETWEEN 7 AND 12 THEN '6-12 months'
+            WHEN DATEDIFF(MONTH, p.launch_date, s.sale_date) BETWEEN 13 AND 18 THEN '12-18 months'
             ELSE '18+ months'
-        END AS [sales_period],
-        SUM([total_sales]) AS [total_sales_in_period]
-    FROM 
-        ProductSales
+        END AS sales_period,
+        SUM(s.quantity * pp.price) AS total_sales_in_period
+    FROM dbo.sales s
+    JOIN dbo.products p ON s.product_id = p.product_id
+    JOIN dbo.product_prices pp ON s.product_id = pp.product_id
+    WHERE s.sale_date >= p.launch_date
     GROUP BY 
-        [product_id], [product_name], [sales_period]
+        p.product_id,
+        p.product_name,
+        CASE 
+            WHEN DATEDIFF(MONTH, p.launch_date, s.sale_date) BETWEEN 0 AND 6 THEN '0-6 months'
+            WHEN DATEDIFF(MONTH, p.launch_date, s.sale_date) BETWEEN 7 AND 12 THEN '6-12 months'
+            WHEN DATEDIFF(MONTH, p.launch_date, s.sale_date) BETWEEN 13 AND 18 THEN '12-18 months'
+            ELSE '18+ months'
+        END
 )
 SELECT 
-    [product_id],
-    [product_name],
-    [sales_period],
-    [total_sales_in_period]
-FROM 
-    SalesTrends
+    product_id,
+    product_name,
+    sales_period,
+    total_sales_in_period
+FROM SalesTrends
 ORDER BY 
-    [product_id], 
-    CASE 
-        WHEN [sales_period] = '0-6 months' THEN 1
-        WHEN [sales_period] = '6-12 months' THEN 2
-        WHEN [sales_period] = '12-18 months' THEN 3
+    product_id,
+    CASE sales_period
+        WHEN '0-6 months' THEN 1
+        WHEN '6-12 months' THEN 2
+        WHEN '12-18 months' THEN 3
         ELSE 4
     END;
+
 ```
