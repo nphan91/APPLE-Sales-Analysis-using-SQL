@@ -32,17 +32,14 @@ ORDER BY [store_count] DESC;
 # 2. Calculate the total number of units sold by each state
 ```sql
 SELECT 
-    S.[store_id], 
-    ST.[store_name], 
+    ST.[state],  
     SUM(S.[quantity]) AS [total_unit_sold]
 FROM 
     [dbo].[sales] S
 JOIN 
-    [dbo].[stores] ST
-ON 
-    S.[store_id] = ST.[store_id]
+    [dbo].[stores] ST ON S.[store_id] = ST.[store_id]
 GROUP BY 
-    S.[store_id], ST.[store_name]
+    ST.[state]
 ORDER BY 
     SUM(S.[quantity]) DESC;
 
